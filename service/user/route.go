@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/scorcism/go-auth/config"
 	"github.com/scorcism/go-auth/service/auth"
 	"github.com/scorcism/go-auth/types"
 	"github.com/scorcism/go-auth/utils"
@@ -28,6 +29,50 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
+	// get request payload
+	var payload types.LoginUserPayload
+
+	// parse the payload
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	// validate payload
+	if err := utils.Validate.Struct(payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload %v", errors))
+		return
+	}
+	// check if user exists
+	u, err := h.store.GetUserByEmail(payload.Email)
+
+	fmt.Println(u)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid credentials"))
+		return
+	}
+	fmt.Println(u.Password, payload.Password)
+
+	// Validate the password
+	if !auth.ComparePassword(u.Password, []byte(payload.Password)) {
+		fmt.Println("Passwords do not match")
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid credentials"))
+		return
+	}
+
+	// craft jwt
+	secret := []byte(config.Envs.JWT_SECRET)
+
+	token, err := auth.CreateJWT(secret, u.ID)
+
+	if err != nil {
+		fmt.Println("error while create jwt", err)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid credentials"))
+		return
+	}
+
+	// send response
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"token": token, "email": u.Email})
 }
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +100,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// hash user password
-	hashedPassword, err := auth.Hashpassword(payload.Password)
+	hashedPassword, err := auth.HashPassword(payload.Password)
 
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
