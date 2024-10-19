@@ -48,11 +48,13 @@ func main() {
 
 	if cmd == "up" {
 		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+			log.Printf("Migration failed: %v", err)
 			log.Fatal(err)
 		}
 	}
 	if cmd == "down" {
 		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+			log.Printf("Migration failed: %v", err)
 			log.Fatal(err)
 		}
 	}

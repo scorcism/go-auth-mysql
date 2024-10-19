@@ -28,10 +28,10 @@ func initConfig() Config {
 	return Config{
 		PublicHost:   getEnv("PUBLIC_HOST", "127.0.0.1"),
 		Port:         getEnv("PORT", "8080"),
-		DBUser:       getEnv("DB_USER", "admin"),
+		DBUser:       getEnv("DB_USER", "root"),
 		DBPassword:   getEnv("DB_PASSWORD", "admin"),
 		DBAddress:    fmt.Sprintf("%s:%s", getEnv("DB_HOST", "127.0.0.1"), getEnv("DB_PORT", "3306")),
-		DBName:       getEnv("DB_NAME", "go_auth"),
+		DBName:       getEnv("DB_NAME", "secrets_management"),
 		JWT_SECRET:   getEnv("JWT_SECRET", "apple"),
 		JWT_AUTH_EXP: getEnvAsInt("JWT_AUTH_EXP", 3600*24*2),
 	}
