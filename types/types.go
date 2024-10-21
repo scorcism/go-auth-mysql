@@ -9,7 +9,7 @@ type UserStore interface {
 }
 
 type SecretsStore interface {
-	GetSecrets() ([]Secret, error)
+	GetSecrets(userId int) ([]Secret, error)
 	AddSecret(Secret) error
 }
 

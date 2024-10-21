@@ -49,8 +49,6 @@ func (s *Store) CreateUser(user types.User) error {
 
 func (s *Store) GetUserByID(id int) (*types.User, error) {
 
-	fmt.Printf("userId by id: %v", id)
-
 	rows, err := s.db.Query("SELECT * FROM users WHERE id = ?", id)
 
 	if err != nil {
@@ -85,6 +83,7 @@ func scanRowIntoUser(rows *sql.Rows) (*types.User, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
+		&user.Password,
 		&user.CreatedAt,
 	)
 

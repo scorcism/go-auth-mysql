@@ -41,7 +41,7 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 	})
 }
 
-func permissionDenied(w http.ResponseWriter) {
+func PermissionDenied(w http.ResponseWriter) {
 	utils.WriteError(w, http.StatusForbidden, fmt.Errorf("permission denied"))
 }
 
@@ -59,13 +59,13 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 
 		if err != nil {
 			log.Printf("faild to validate token: %v", err)
-			permissionDenied(w)
+			PermissionDenied(w)
 			return
 		}
 
 		if !token.Valid {
 			fmt.Printf("invalid token")
-			permissionDenied(w)
+			PermissionDenied(w)
 			return
 		}
 
@@ -77,7 +77,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 
 		if err != nil {
 			fmt.Printf("faild to convert userId to int: %v", err)
-			permissionDenied(w)
+			PermissionDenied(w)
 			return
 		}
 
@@ -87,7 +87,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 
 		if err != nil {
 			fmt.Printf("faild to get user id: %v", err)
-			permissionDenied(w)
+			PermissionDenied(w)
 			return
 		}
 
@@ -96,6 +96,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 		ctx = context.WithValue(ctx, UserKey, u)
 		r = r.WithContext(ctx)
 
+		fmt.Println("handlerFunc(w, r)")
 		handlerFunc(w, r)
 	}
 }

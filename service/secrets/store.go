@@ -16,8 +16,8 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
-func (s *Store) GetSecrets() ([]types.Secret, error) {
-	rows, err := s.db.Query("SELECT * FROM secrets")
+func (s *Store) GetSecrets(userId int) ([]types.Secret, error) {
+	rows, err := s.db.Query("SELECT * FROM secrets where user_id=?", userId)
 	if err != nil {
 		return nil, err
 	}

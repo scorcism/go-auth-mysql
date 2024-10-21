@@ -21,12 +21,20 @@ func NewHandler(store types.SecretsStore, userStore types.UserStore) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/get-secrets", h.handleGetSecrets).Methods(http.MethodGet)
+	router.HandleFunc("/get-secrets", auth.WithJWTAuth(h.handleGetSecrets, h.userStore)).Methods(http.MethodGet)
 	router.HandleFunc("/add-secret", auth.WithJWTAuth(h.handleAddNewSecret, h.userStore)).Methods(http.MethodPost)
 }
 
 func (h *Handler) handleGetSecrets(w http.ResponseWriter, r *http.Request) {
-	secrets, err := h.store.GetSecrets()
+	user, ok := auth.GetUserFromContext(r.Context())
+
+	if !ok {
+		fmt.Println("User not found in context")
+		auth.PermissionDenied(w)
+		return
+	}
+
+	secrets, err := h.store.GetSecrets(user.ID)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
@@ -40,15 +48,11 @@ func (h *Handler) handleAddNewSecret(w http.ResponseWriter, r *http.Request) {
 
 	if !ok {
 		fmt.Println("User not found in context")
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("error while context"))
+		auth.PermissionDenied(w)
 		return
-	} else {
-		fmt.Printf("User: %+v\n", user)
 	}
 
-	userId := 1 
-
-	fmt.Printf("userId: %v", userId)
+	userId := user.ID
 
 	// get the payload
 	var payload types.AddSecretPayload
@@ -56,12 +60,14 @@ func (h *Handler) handleAddNewSecret(w http.ResponseWriter, r *http.Request) {
 	// parse the payload
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
+		return
 	}
 
 	// validate the payload
 	if err := utils.Validate.Struct(payload); err != nil {
 		errors := err.(validator.ValidationErrors)
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload %v", errors))
+		return
 	}
 
 	err := h.store.AddSecret(types.Secret{
