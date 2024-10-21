@@ -46,12 +46,11 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// check if user exists
 	u, err := h.store.GetUserByEmail(payload.Email)
 
-	fmt.Println(u)
+	
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid credentials"))
 		return
 	}
-	fmt.Println(u.Password, payload.Password)
 
 	// Validate the password
 	if !auth.ComparePassword(u.Password, []byte(payload.Password)) {

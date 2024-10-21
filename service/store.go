@@ -26,7 +26,7 @@ func (s *Store) GetUserByEmail(email string) (*types.User, error) {
 
 	u := new(types.User)
 	for rows.Next() {
-		u, err = scaneRowIntoUser(rows)
+		u, err = scanRowIntoUser(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -43,11 +43,41 @@ func (s *Store) CreateUser(user types.User) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
-func scaneRowIntoUser(rows *sql.Rows) (*types.User, error) {
+func (s *Store) GetUserByID(id int) (*types.User, error) {
+
+	fmt.Printf("userId by id: %v", id)
+
+	rows, err := s.db.Query("SELECT * FROM users WHERE id = ?", id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	u := new(types.User)
+	u, err = scanRowIntoUser(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	if u.ID == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	fmt.Println(u)
+	return u, nil
+}
+
+func scanRowIntoUser(rows *sql.Rows) (*types.User, error) {
 	user := new(types.User)
 
 	err := rows.Scan(
@@ -55,7 +85,6 @@ func scaneRowIntoUser(rows *sql.Rows) (*types.User, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
-		&user.Password,
 		&user.CreatedAt,
 	)
 

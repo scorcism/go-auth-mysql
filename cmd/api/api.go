@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	store "github.com/scorcism/go-auth/service"
+	"github.com/scorcism/go-auth/service/secrets"
 	"github.com/scorcism/go-auth/service/user"
 )
 
@@ -32,6 +33,10 @@ func (s *APIServer) Run() error {
 
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(subrouter)
+
+	secretsStore := secrets.NewStore(s.db)
+	secretsHandler := secrets.NewHandler(secretsStore, userStore)
+	secretsHandler.RegisterRoutes(subrouter)
 
 	log.Println("Listening on", s.addr)
 
